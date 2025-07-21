@@ -1,0 +1,188 @@
+#Name for resources created by the templates
+name: example-app
+#Docker img default command can be changed
+entrypoint: "sh"
+args: '"-c", "echo \"🎉 Welcome to Example Helm Chart App! 🚀\nThis is a fun example application running on Kubernetes with ArgoCD!\nEnvironment: Development\nFeatures:\n✅ AWS ALB Ingress\n✅ Shared Load Balancer\n✅ SSL/TLS Support\n✅ WAF Protection\n✅ Health Checks\n✅ Standalone Helm Chart\n✅ AWS Secrets Manager Integration\n✅ Environment Variables from Secrets\n\nMy supersecret word is: $supersecret\n\nDeployed with ❤️ using ArgoCD\" && echo \"Environment: $APP_ENVIRONMENT\" && echo \"Version: $APP_VERSION\" && echo \"Database URL: $database_url\" && echo \"API Key: $api_key\" && echo \"Feature Flags: $feature_flags\" && sleep infinity"'
+image: hashicorp/http-echo:latest
+#We can get Docker img pull secrets from AWS Secrets Manager
+#imagePullSecrets:
+  #- k8s_secret_name: docker-remote.hypr.com
+  #  aws_secret_name: /hypr/dev-workloads/docker_registry/docker-remote.hypr.com
+#Pod env vars can be added here
+containerEnv:
+  - name: APP_ENVIRONMENT
+    value: "Development"
+  - name: APP_VERSION
+    value: "1.0.0"
+#This can be useful then pods need env vars containing data from AWS Secret Manager
+envSecrets:
+  - k8s_secret_name: app-secrets
+    aws_secret_name: /hypr/example-app/secrets
+    keys:
+      - "database_url"
+      - "api_key"
+      - "feature_flags"
+      - "supersecret"
+replicas: 1
+#labels:
+  #name: example
+#selector
+  #matchLabels:
+    #name: example
+#nodeSelector:
+  #lifecycle: example
+#This creates a ConfigMap with the file content and then mounts it inside the pod as a file
+#extraPodFiles:
+  #- content: |
+  #    #!/bin/bash
+  #    echo test
+  #  mount_path: /tmp/scr.sh
+serviceAccount:
+  create: false
+  #When AWS secrets are used inside pods we need an IAM role that has access to the secrets
+  #role: arn:aws:iam::<acct_id>:role/<role_name> OR <path:/hypr/<cluster_name>/argocd/terraform_values#<role_name>>
+#Volumes to add to pods:
+#volumes:
+ #- name: tmp
+ #  emptyDir:
+ #    sizeLimit: 500Mi
+#volumeMounts:
+ #- mountPath: /tmp
+ #  name: tmp
+#containerSecurityContext:
+  #allowPrivilegeEscalation: false
+  #capabilities:
+    #drop:
+    #- ALL
+  #privileged: false
+  #readOnlyRootFilesystem: true
+  #runAsNonRoot: true
+#podSecurityContext:
+  #runAsNonRoot: true
+  #seccompProfile:
+    #type: RuntimeDefault
+#ingress:
+  #Ingresses with the same group_name share one load balancer 
+  #group_name: "apps"
+  #hosts:
+   #- test.biometric.software
+  #To add a non-standard port to LB use the following value
+  #listeners: '[{"HTTP":80}, {"HTTPS":443}, {"HTTPS":8443}]'
+  #This can be useful when redirect from "/" to another path is needed
+  #redirect_path: "/sample/"
+  #certificateArn: <ACM cert ARN>
+  #This flag used to set a Load Balancer schema (internal or public) and for DNS records creation.
+  #public: false
+
+  #Use values below if you need to create dedicated ALB for you app, if you are using shared ALB these values will not have any effect.
+  #Can be used to set a custom name for load balancer created for the Ingress
+  #lb_name: "test-app"
+  #lb_deletion_protection: false
+  #lb_inbound_cidrs: "10.0.0.0/8"
+  #lb_logs_s3_bucket: <S3 bucket name>
+  #lb_ssl_policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  #lb_timeout: 90
+  #lb_waf_fail_open: false
+  #tg_attributes_deregistration_delay: 90
+  #Identifier of the Amazon WAF web ACL to use
+  #waf_acl_id: "4612fda8-f2d6-4c64-abc5-441ed1883cf9"
+  #Instead of WAF ACL ID we can use Arn
+  #waf_acl_arn: "arn:aws:wafv2:us-east-1:803086651843:regional/webacl/hypr-acls-set/4612fda8-f2d6-4c64-abc5-441ed1883cf9"
+#service:
+  # Add desired annotations to a service, like Datadog host monitoring
+  #annotations:
+    #ad.datadoghq.com/service.checks: '{"http_check": {"init_config": {},"instances": [{"url": "https://app.hypr.com","name": "prod app name","timeout": 5, "tags": ["env:<env>","management:argocd","name:<app_name>"]}]}}'
+    #key1: 'value1'
+    #key2: 'value2'
+#This makes ExternalDNS create DNS records for the app 
+#create_dns_records: true
+port: 8080
+#This enables default network policies for pods created by this chart. The policies block instance metadata access
+#The default policies also enable Internet access for pods
+denyMetadata: true
+#readiness:
+  #tcpSocket:
+    #port: 8080
+  #initialDelaySeconds: 5
+  #periodSeconds: 10
+#liveness:
+  #tcpSocket:
+    #port: 8080
+  #initialDelaySeconds: 35
+  #periodSeconds: 20
+#resources:
+  #requests:
+    #memory: 512Mi
+    #cpu: 300m
+  #limits:
+    #memory: 1000Mi
+    #cpu: 1000m
+# Pod security admissions level
+pod_security_admission_level: restricted
+#Tolerations allow scheduling pods on nodes with taints
+tolerations:
+  - key: "lifecycle"
+    operator: "Equal"
+    value: "onDemand"
+#networkPolicy:
+  #egress:
+  #- action: Allow
+    #destination:
+      #namespaceSelector: projectcalico.org/name in {'kube-system'}
+    #metadata:
+      #annotations:
+        #from: this namespaces
+        #to: listed namespaces
+    #source: {}
+  #ingress:
+  #- action: Allow
+    #destination: {}
+    #metadata:
+      #annotations:
+        #from: listed namespaces
+        #to: this namespace
+    #source:
+      #namespaceSelector: projectcalico.org/name in {'kube-system'}
+#HPA isn't currently implemented
+#autoscaler:
+  #minReplicas: 1
+  #maxReplicas: 3
+#If pods require data from AWS Secrets Manager we can use Secret Manager K8s app to get the secrets from AWS and create K8s secrets containing
+#the secret data. However when pods use secret data as env vars Secret Manager app won't create K8s secrets for pods to get env vars from
+#As a workaround we use "Secret Init deployment" that's sole purpose is to mount volumes containing the secrets inside of "Secret Init" pod
+#To force Secret Manager to create K8s secrets other pods can use
+secretInitDeployment:
+  image: docker-remote.hypr.com/busybox:1.35
+  #To reduce the number of Docker img pulls from Docker Hub we can use our Artifactory cache:
+  #image: docker-remote.hypr.com/busybox:1.35
+  #imagePullSecrets:
+    #- k8s_secret_name: secret-init-docker-remote.hypr.com
+    #  aws_secret_name: /hypr/dev-workloads/docker_registry/docker-remote.hypr.com
+#priorityClassName: example
+#priorityClassValue: 100
+#priorityClassDescription: "Priority class used by resource"
+
+#Create roles:
+#roles:
+#  - name: aws-ingress-connect-controller
+#    rules:
+#      - apiGroups:
+#          - ""
+#        resourceNames:
+#          - okta
+#        resources:
+#          - secrets
+#        verbs:
+#          - list
+#          - watch
+#          - get
+
+#Create rolebindings:
+#roleBindings:
+#  - name: ingress-connect-controller
+#    roleRef:
+#      name: aws-ingress-connect-controller
+#    subjects:
+#      - kind: ServiceAccount
+#        name: workloads-aws-lb-ingress
+#        namespace: kube-system

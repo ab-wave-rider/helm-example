@@ -1,0 +1,7 @@
+name: example-app
+description: An example Helm chart template for teams to use as a starting point
+maintainers:
+  - email: aleksey.bury@hypr.com
+    name: Aleksey Bury
+version: 0.0.1
+apiVersion: v2
