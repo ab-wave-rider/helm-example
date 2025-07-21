@@ -73,26 +73,7 @@ This chart is designed to be **copied and customized** for your specific use cas
 
 ### Using Helm
 
-#### Option 1: Install from GitHub Repository (Recommended)
-
-```bash
-# Add the Helm repository
-helm repo add ab-wave-rider https://ab-wave-rider.github.io/helm-example
-
-# Update repository
-helm repo update
-
-# Install the chart
-helm install example-app ab-wave-rider/example-app
-
-# Upgrade existing installation
-helm upgrade example-app ab-wave-rider/example-app
-
-# Uninstall
-helm uninstall example-app
-```
-
-#### Option 2: Install directly from GitHub
+#### Option 1: Install directly from GitHub (Recommended)
 
 ```bash
 # Install the chart directly from GitHub
@@ -105,10 +86,27 @@ helm upgrade example-app https://github.com/ab-wave-rider/helm-example/archive/r
 helm uninstall example-app
 ```
 
-#### Option 3: Install from local directory
+#### Option 2: Install from local directory
 
 ```bash
 # Install the chart from local directory
+helm install example-app ./
+
+# Upgrade existing installation
+helm upgrade example-app ./
+
+# Uninstall
+helm uninstall example-app
+```
+
+#### Option 3: Clone and install
+
+```bash
+# Clone the repository
+git clone https://github.com/ab-wave-rider/helm-example.git
+cd helm-example
+
+# Install the chart
 helm install example-app ./
 
 # Upgrade existing installation
