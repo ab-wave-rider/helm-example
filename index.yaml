@@ -1,0 +1,15 @@
+apiVersion: v1
+entries:
+  example-app:
+  - apiVersion: v2
+    created: "2025-07-21T21:56:19.750070988Z"
+    description: An example Helm chart template for teams to use as a starting point
+    digest: 6656ea35399bc5d4cb5979c22ce85f56855b17043a3f6332ede7c2e3df7b71c1
+    maintainers:
+    - email: aleksey.bury@hypr.com
+      name: Aleksey Bury
+    name: example-app
+    urls:
+    - https://ab-wave-rider.github.io/helm-example/example-app-0.0.1.tgz
+    version: 0.0.1
+generated: "2025-07-21T21:56:19.748177655Z"

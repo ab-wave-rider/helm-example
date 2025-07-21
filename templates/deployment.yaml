@@ -1,0 +1,143 @@
+{{- if .Values.image }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.name }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.name }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Values.name }}
+      {{- if .Values.selector }}
+      {{- with .Values.selector.matchLabels }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      {{- end }}
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}  
+      labels:
+        app.kubernetes.io/name: {{ .Values.name }}
+        hypr-component: {{ .Values.name }}
+        {{- if .Values.denyMetadata }}
+        deny-metadata: "true"
+        {{- end }}
+        {{- with .Values.labels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ .Values.name }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ .Values.name }}
+        {{- if .Values.entrypoint }}
+        command: [ "{{ .Values.entrypoint }}" ]
+        {{- end }}
+        {{- if .Values.args }}
+        args: [ {{ .Values.args }} ]
+        {{- end }}
+        image: {{ .Values.image }}
+        env:
+        {{- with .Values.containerEnv }}
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- range $env_secrets := .Values.envSecrets }}
+          {{- if .keys }}
+            {{- range .keys }}
+          - name: {{ . }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ $env_secrets.k8s_secret_name }}
+                key: {{ . }}
+            {{- end }}
+          {{- else }}
+          - name: {{ .variable_name }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ .k8s_secret_name }}
+                key: secret
+          {{- end }}
+        {{- end }}
+        {{- if .Values.port }}
+        ports:
+        - containerPort: {{ .Values.port }}
+        {{- end }}
+        {{- with .Values.liveness }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.readiness }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- if or .Values.resources.requests .Values.resources.limits }}
+        resources:
+          {{- if .Values.resources.requests }}
+          requests:
+            memory: {{ .Values.resources.requests.memory }}
+            cpu: {{ .Values.resources.requests.cpu }}
+          {{- end }}
+          {{- if .Values.resources.limits }}
+          limits:
+            memory: {{ .Values.resources.limits.memory }}
+            cpu: {{ .Values.resources.limits.cpu }}
+          {{- end }}
+        {{- end }}
+        {{- if or .Values.volumeMounts .Values.extraPodFiles }}
+        volumeMounts:
+          {{- with .Values.volumeMounts }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- range .Values.extraPodFiles }}
+          - name: {{ regexReplaceAll "\\W+" (base .mount_path) "-" | trimAll "-" }}
+            mountPath: {{ .mount_path }}
+            subPath: {{ base .mount_path }}
+          {{- end }}
+        {{- end }}
+        {{- with .Values.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or .Values.volumes .Values.extraPodFiles }}
+      volumes:
+        {{- with .Values.volumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- range .Values.extraPodFiles }}
+        - name: {{ regexReplaceAll "\\W+" (base .mount_path) "-" | trimAll "-" }}
+          configMap:
+            name: {{ $.Values.name }}-files
+            items:
+            - key: {{ regexReplaceAll "\\W+" (base .mount_path) "-" }}
+              path: {{ base .mount_path }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.imagePullSecrets }}
+       - name: {{ .k8s_secret_name }}
+      {{- end }}
+      {{- end }}
+---
+{{- end }}

@@ -1,0 +1,27 @@
+{{- if .Values.networkPolicy }}
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: deny-inter-ns-traffic
+spec:
+  types:
+  - Ingress
+  - Egress
+---
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: {{ .Values.name }}-customized-policy
+spec:
+  egress:
+  {{- with .Values.networkPolicy.egress }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  ingress:
+  {{- with .Values.networkPolicy.ingress }}
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  types:
+  - Ingress
+  - Egress
+{{- end }}

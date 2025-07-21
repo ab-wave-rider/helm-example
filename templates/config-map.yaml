@@ -1,0 +1,10 @@
+{{- if .Values.extraPodFiles }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.name }}-files
+data:
+  {{- range .Values.extraPodFiles }}
+  {{ regexReplaceAll "\\W+" (base .mount_path) "-" }}: {{- .content | toYaml | indent 1 }}
+  {{- end }}
+{{- end }}
